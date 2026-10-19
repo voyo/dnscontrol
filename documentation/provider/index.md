@@ -85,6 +85,7 @@ Jump to a table:
 | [`PACKETFRAME`](packetframe.md) | ❌ | ✅ | ❌ |
 | [`PORKBUN`](porkbun.md) | ❌ | ✅ | ✅ |
 | [`POWERDNS`](powerdns.md) | ❌ | ✅ | ❌ |
+| [`PRIMEDNS`](primedns.md) | ❌ | ✅ | ❌ |
 | [`REALTIMEREGISTER`](realtimeregister.md) | ❌ | ✅ | ✅ |
 | [`ROUTE53`](route53.md) | ✅ | ✅ | ✅ |
 | [`RWTH`](rwth.md) | ❌ | ✅ | ❌ |
@@ -167,6 +168,7 @@ Jump to a table:
 | [`PACKETFRAME`](packetframe.md) | ✅ | ❌ | ❌ | ❌ |
 | [`PORKBUN`](porkbun.md) | ✅ | ❌ | ❌ | ✅ |
 | [`POWERDNS`](powerdns.md) | ✅ | ✅ | ✅ | ✅ |
+| [`PRIMEDNS`](primedns.md) | ❌ | ✅ | ✅ | ✅ |
 | [`REALTIMEREGISTER`](realtimeregister.md) | ✅ | ❌ | ✅ | ✅ |
 | [`ROUTE53`](route53.md) | ✅ | ✅ | ✅ | ✅ |
 | [`RWTH`](rwth.md) | ✅ | ❌ | ❌ | ✅ |
@@ -249,6 +251,7 @@ Jump to a table:
 | [`PACKETFRAME`](packetframe.md) | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
 | [`PORKBUN`](porkbun.md) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | [`POWERDNS`](powerdns.md) | ✅ | ❌ | ✅ | ❔ | ✅ | ❌ | ✅ |
+| [`PRIMEDNS`](primedns.md) | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | [`REALTIMEREGISTER`](realtimeregister.md) | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
 | [`ROUTE53`](route53.md) | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
 | [`RWTH`](rwth.md) | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
@@ -331,6 +334,7 @@ Jump to a table:
 | [`PACKETFRAME`](packetframe.md) | ❌ | ❌ | ✅ | ❌ |
 | [`PORKBUN`](porkbun.md) | ❌ | ❌ | ✅ | ✅ |
 | [`POWERDNS`](powerdns.md) | ✅ | ✅ | ✅ | ✅ |
+| [`PRIMEDNS`](primedns.md) | ❌ | ✅ | ✅ | ✅ |
 | [`REALTIMEREGISTER`](realtimeregister.md) | ❌ | ✅ | ✅ | ❌ |
 | [`ROUTE53`](route53.md) | ❌ | ❌ | ✅ | ✅ |
 | [`RWTH`](rwth.md) | ❌ | ❌ | ✅ | ❌ |
@@ -413,6 +417,7 @@ Jump to a table:
 | [`PACKETFRAME`](packetframe.md) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | [`PORKBUN`](porkbun.md) | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
 | [`POWERDNS`](powerdns.md) | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| [`PRIMEDNS`](primedns.md) | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
 | [`REALTIMEREGISTER`](realtimeregister.md) | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | [`ROUTE53`](route53.md) | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
 | [`RWTH`](rwth.md) | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
@@ -495,6 +500,7 @@ Jump to a table:
 | [`PACKETFRAME`](packetframe.md) | ❌ | ❌ | ❌ |
 | [`PORKBUN`](porkbun.md) | ❌ | ❌ | ❌ |
 | [`POWERDNS`](powerdns.md) | ✅ | ✅ | ✅ |
+| [`PRIMEDNS`](primedns.md) | ❌ | ❌ | ✅ |
 | [`REALTIMEREGISTER`](realtimeregister.md) | ✅ | ❌ | ❌ |
 | [`ROUTE53`](route53.md) | ❌ | ❌ | ❌ |
 | [`RWTH`](rwth.md) | ❔ | ❌ | ❔ |
