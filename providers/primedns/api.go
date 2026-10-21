@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -154,14 +155,31 @@ func retryWait(header string, attempt int) time.Duration {
 	return time.Duration(1<<uint(attempt)) * time.Second
 }
 
+// pageSize is the page size requested from list endpoints. Without `limit` the API returns the whole list in one
+// response, which it will keep doing; paging keeps very large zones and accounts from producing huge responses.
+const pageSize = 1000
+
 func (p *primednsProvider) listZones() ([]zone, error) {
-	var out struct {
-		Domains []zone `json:"domains"`
+	var all []zone
+	cursor := ""
+	for {
+		var out struct {
+			Domains    []zone  `json:"domains"`
+			NextCursor *string `json:"next_cursor"`
+		}
+		path := fmt.Sprintf("/domains?limit=%d", pageSize)
+		if cursor != "" {
+			path += "&cursor=" + url.QueryEscape(cursor)
+		}
+		if err := p.do(http.MethodGet, path, nil, &out); err != nil {
+			return nil, err
+		}
+		all = append(all, out.Domains...)
+		if out.NextCursor == nil || *out.NextCursor == "" {
+			return all, nil
+		}
+		cursor = *out.NextCursor
 	}
-	if err := p.do(http.MethodGet, "/domains", nil, &out); err != nil {
-		return nil, err
-	}
-	return out.Domains, nil
 }
 
 func (p *primednsProvider) getZone(name string) (*zone, error) {
@@ -185,13 +203,26 @@ func (p *primednsProvider) createZone(name string) error {
 }
 
 func (p *primednsProvider) listRecords(domain string) ([]record, error) {
-	var out struct {
-		Records []record `json:"records"`
+	var all []record
+	cursor := ""
+	for {
+		var out struct {
+			Records    []record `json:"records"`
+			NextCursor *string  `json:"next_cursor"`
+		}
+		path := fmt.Sprintf("/dns/records?domain=%s&limit=%d", url.QueryEscape(domain), pageSize)
+		if cursor != "" {
+			path += "&cursor=" + url.QueryEscape(cursor)
+		}
+		if err := p.do(http.MethodGet, path, nil, &out); err != nil {
+			return nil, err
+		}
+		all = append(all, out.Records...)
+		if out.NextCursor == nil || *out.NextCursor == "" {
+			return all, nil
+		}
+		cursor = *out.NextCursor
 	}
-	if err := p.do(http.MethodGet, "/dns/records?domain="+domain, nil, &out); err != nil {
-		return nil, err
-	}
-	return out.Records, nil
 }
 
 func (p *primednsProvider) createRecord(in recordInput) error {
