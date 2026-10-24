@@ -43,7 +43,8 @@ func init() {
 			"SVCB",
 			"TLSA",
 		},
-		// The API allows 60 requests per minute per account unless the key says otherwise.
+		// The API allows 300 to 1000 requests per minute depending on the plan of the key's owner (plans.api_rate_limit),
+		// unless the key itself sets a lower limit; see documentation/provider/primedns.md, "Rate limit".
 		CanConcur: providers.Cannot(),
 		CredFields: []providers.CredsField{
 			{
