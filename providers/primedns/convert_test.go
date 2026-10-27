@@ -27,6 +27,7 @@ func TestSkipRecord(t *testing.T) {
 		r    record
 		want bool
 	}{
+		{"empty non-terminal", record{Name: "_domainkey.example.com", Type: "", TTL: 0}, true},
 		{"soa", record{Name: "example.com", Type: "SOA"}, true},
 		{"cds", record{Name: "example.com", Type: "CDS"}, true},
 		{"uri", record{Name: "_u.example.com", Type: "URI"}, true},

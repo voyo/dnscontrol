@@ -13,9 +13,14 @@ import (
 //   - SOA is managed by PrimeDNS.
 //   - The apex NS records that point at PrimeDNS's own name servers are managed by PrimeDNS. Other apex NS records
 //     (a second provider for dual hosting) are kept.
+//   - Rows with an empty type are empty non-terminals, not records.
 //   - CDS, CDNSKEY and URI exist at PrimeDNS but DNSControl has no such record types.
 func skipRecord(domain string, r record) bool {
 	switch r.Type {
+	case "":
+		// An empty non-terminal: the API lists the helper row of a name that only has names below it
+		// (_domainkey when default._domainkey exists) with an empty type, TTL 0 and empty content. It is not a record.
+		return true
 	case "SOA", "CDS", "CDNSKEY", "URI":
 		return true
 	case "NS":
