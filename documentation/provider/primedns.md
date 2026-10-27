@@ -16,8 +16,9 @@ Example:
 ```
 {% endcode %}
 
-The key needs the scopes `dns:read`, `dns:write` and `domains:read`. `dnscontrol create-zones` also needs `zones:create`.
-A key can be limited to some zones (`allowed_zones`) when you create it.
+The key needs the scopes `dns:read` and `dns:write`. `dnscontrol create-zones` also needs `zones:create`, and
+`dnscontrol get-zones ... all` needs `domains:read` (it lists the zones of the account).
+A key can be limited to some zones (`allowed_zones`) when you create it; that is enough for normal use.
 
 Optional: `api_url` overrides the API base URL (default `https://api.primedns.net/v1`).
 
@@ -67,6 +68,20 @@ D("example.com", REG_NAMECHEAP, DnsProvider(DSP_PRIMEDNS),
     NAMESERVER("ns1.primedns.net"),
     NAMESERVER("ns2.primedns.net"),
     // ...
+END);
+```
+{% endcode %}
+
+## Extra NS records at the apex
+
+PrimeDNS keeps all records of one name and type on one TTL (RFC 2181 section 5.2). Its own NS records at the apex have a TTL of
+8000 seconds, so an NS record you add at the apex (for example a second provider) must use the same TTL, or the API refuses it
+with `TTL_MISMATCH`. DNSControl reports this before it changes anything:
+
+{% code title="dnsconfig.js" %}
+```javascript
+D("example.com", REG_NONE, DnsProvider(DSP_PRIMEDNS),
+    NS("@", "ns1.other-provider.example.", TTL(8000)),
 END);
 ```
 {% endcode %}

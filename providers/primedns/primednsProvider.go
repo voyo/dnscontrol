@@ -18,7 +18,7 @@ import (
 PrimeDNS (https://primedns.net) DNS provider.
 
 Info required in `creds.json`:
-   - api_key   A PrimeDNS API key (X-API-Key). It needs the scopes dns:read, dns:write and domains:read,
+   - api_key   A PrimeDNS API key (X-API-Key). It needs the scopes dns:read and dns:write;
                and zones:create to let "dnscontrol create-zones" add a zone.
 Optional:
    - api_url   The API base URL. Default https://api.primedns.net/v1
@@ -50,7 +50,7 @@ func init() {
 			{
 				Key:      "api_key",
 				Label:    "API key",
-				Help:     "A PrimeDNS API key with the scopes dns:read, dns:write and domains:read (and zones:create to let create-zones add a zone).",
+				Help:     "A PrimeDNS API key with the scopes dns:read and dns:write. get-zones with all also needs domains:read, create-zones needs zones:create.",
 				Secret:   true,
 				Required: true,
 			},
@@ -86,10 +86,6 @@ func (p *primednsProvider) Initialize(m map[string]string, _ json.RawMessage, _ 
 		apiKey:  apiKey,
 		baseURL: baseURL,
 	}
-	// Check the key right away, so a wrong key fails here and not in the middle of a run.
-	if _, err := p.listZones(); err != nil {
-		return fmt.Errorf("PrimeDNS credentials check failed: %w", err)
-	}
 	return nil
 }
 
@@ -114,22 +110,26 @@ func (p *primednsProvider) ListZones() ([]string, error) {
 
 // EnsureZoneExists adds the zone to the account when it is missing.
 func (p *primednsProvider) EnsureZoneExists(dc *models.DomainConfig) error {
-	if _, err := p.getZone(dc.Name); err == nil {
-		return nil
-	} else if !errors.Is(err, errZoneNotFound) {
+	records, err := p.listRecords(dc.Name)
+	if err != nil {
 		return err
+	}
+	if len(records) > 0 {
+		return nil
 	}
 	return p.createZone(dc.Name)
 }
 
 // GetZoneRecords returns the records of the zone.
 func (p *primednsProvider) GetZoneRecords(dc *models.DomainConfig) (models.Records, error) {
-	if _, err := p.getZone(dc.Name); err != nil {
-		return nil, fmt.Errorf("zone %s: %w", dc.Name, err)
-	}
 	records, err := p.listRecords(dc.Name)
 	if err != nil {
 		return nil, fmt.Errorf("listing the records of %s: %w", dc.Name, err)
+	}
+	// A zone of the account always has its SOA and NS records. The API answers an empty list both for a zone that
+	// is not in the account (or not allowed for this key) and for a zone that does not exist.
+	if len(records) == 0 {
+		return nil, fmt.Errorf("zone %s: %w", dc.Name, errZoneNotFound)
 	}
 
 	cur := make(models.Records, 0, len(records))
@@ -148,11 +148,6 @@ func (p *primednsProvider) GetZoneRecords(dc *models.DomainConfig) (models.Recor
 
 // GetZoneRecordsCorrections returns the changes that turn curRecords into the desired records of dc.
 func (p *primednsProvider) GetZoneRecordsCorrections(dc *models.DomainConfig, curRecords models.Records) ([]*models.Correction, int, error) {
-	z, err := p.getZone(dc.Name)
-	if err != nil {
-		return nil, 0, fmt.Errorf("zone %s: %w", dc.Name, err)
-	}
-
 	changes, actualChangeCount, err := diff2.ByRecord(curRecords, dc, nil)
 	if err != nil {
 		return nil, 0, err
@@ -165,7 +160,7 @@ func (p *primednsProvider) GetZoneRecordsCorrections(dc *models.DomainConfig, cu
 			corrections = append(corrections, &models.Correction{Msg: change.MsgsJoined})
 		case diff2.CREATE:
 			in := fromRecordConfig(change.New[0])
-			in.DomainID = z.ID
+			in.DomainName = dc.Name
 			corrections = append(corrections, &models.Correction{
 				Msg: change.Msgs[0],
 				F:   func() error { return p.createRecord(in) },

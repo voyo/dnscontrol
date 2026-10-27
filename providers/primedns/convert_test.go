@@ -1,6 +1,9 @@
 package primedns
 
 import (
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -181,5 +184,29 @@ func TestLongTXTIsSplitAtTheSegmentLimit(t *testing.T) {
 	want := `"` + strings.Repeat("a", 255) + `" "` + strings.Repeat("a", 45) + `"`
 	if in.Content != want {
 		t.Errorf("a 300 byte TXT is sent as %q, want two strings (255 + 45)", in.Content)
+	}
+}
+
+func TestEmptyZoneIsReportedAsNotFound(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"success":true,"data":{"records":[],"next_cursor":null}}`))
+	}))
+	defer srv.Close()
+	p := &primednsProvider{client: srv.Client(), apiKey: "k", baseURL: srv.URL}
+	dc := newDC(t)
+	if _, err := p.GetZoneRecords(dc); !errors.Is(err, errZoneNotFound) {
+		t.Errorf("err = %v, want errZoneNotFound", err)
+	}
+}
+
+func TestApexNSMustUseTheSystemTTL(t *testing.T) {
+	dc := newDC(t)
+	apex300, _ := dc.NewRecordConfig("@", 300, "NS", "ns1.other.example.")
+	apex8000, _ := dc.NewRecordConfig("@", 8000, "NS", "ns1.other.example.")
+	sub300, _ := dc.NewRecordConfig("sub", 300, "NS", "ns1.other.example.")
+	p := &primednsProvider{}
+	errs := p.AuditRecords(models.Records{apex300, apex8000, sub300})
+	if len(errs) != 1 || !strings.Contains(errs[0].Error(), "TTL(8000)") {
+		t.Errorf("errors = %v, want exactly one, for the apex NS with TTL 300", errs)
 	}
 }
