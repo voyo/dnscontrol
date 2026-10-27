@@ -155,14 +155,41 @@ func retryWait(header string, attempt int) time.Duration {
 	return time.Duration(1<<uint(attempt)) * time.Second
 }
 
+// listZones returns the zones of the account. A key without the scope domains:read cannot list them with /domains;
+// then the zones are taken from the records the key can read (every record names its zone), which respects the
+// zones the key is limited to and needs only dns:read.
 func (p *primednsProvider) listZones() ([]zone, error) {
 	var out struct {
 		Domains []zone `json:"domains"`
 	}
-	if err := p.do(http.MethodGet, "/domains", nil, &out); err != nil {
+	err := p.do(http.MethodGet, "/domains", nil, &out)
+	if err == nil {
+		return out.Domains, nil
+	}
+	var ae *apiError
+	if !errors.As(err, &ae) || ae.Status != 403 || ae.Code != "INSUFFICIENT_SCOPE" {
 		return nil, err
 	}
-	return out.Domains, nil
+
+	var recs struct {
+		Records []struct {
+			DomainID   int    `json:"domain_id"`
+			DomainName string `json:"domain_name"`
+		} `json:"records"`
+	}
+	if err := p.do(http.MethodGet, "/dns/records", nil, &recs); err != nil {
+		return nil, err
+	}
+	seen := map[int]bool{}
+	var zones []zone
+	for _, r := range recs.Records {
+		if r.DomainName == "" || seen[r.DomainID] {
+			continue
+		}
+		seen[r.DomainID] = true
+		zones = append(zones, zone{ID: r.DomainID, Name: r.DomainName})
+	}
+	return zones, nil
 }
 
 var errZoneNotFound = errors.New("zone not found in this PrimeDNS account, or the API key may not use it (allowed_zones)")

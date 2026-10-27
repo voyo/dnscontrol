@@ -211,3 +211,38 @@ func TestApexNSMustUseTheSystemTTL(t *testing.T) {
 		t.Errorf("errors = %v, want exactly one, for the apex NS with TTL 300", errs)
 	}
 }
+
+func TestListZonesWithoutTheDomainsScope(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/domains":
+			w.WriteHeader(403)
+			w.Write([]byte(`{"success":false,"error":{"code":"INSUFFICIENT_SCOPE","message":"This endpoint requires the 'domains:read' scope."}}`))
+		case "/dns/records":
+			w.Write([]byte(`{"success":true,"data":{"records":[` +
+				`{"id":1,"domain_id":7,"domain_name":"a.example","name":"a.example","type":"SOA"},` +
+				`{"id":2,"domain_id":7,"domain_name":"a.example","name":"www.a.example","type":"A"},` +
+				`{"id":3,"domain_id":9,"domain_name":"b.example","name":"b.example","type":"SOA"}],"next_cursor":null}}`))
+		default:
+			w.WriteHeader(404)
+		}
+	}))
+	defer srv.Close()
+	p := &primednsProvider{client: srv.Client(), apiKey: "k", baseURL: srv.URL}
+	names, err := p.ListZones()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(names) != 2 || names[0] != "a.example" || names[1] != "b.example" {
+		t.Errorf("zones = %v, want [a.example b.example]", names)
+	}
+}
+
+func TestListZonesOtherErrorsAreReturned(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(401) }))
+	defer srv.Close()
+	p := &primednsProvider{client: srv.Client(), apiKey: "k", baseURL: srv.URL}
+	if _, err := p.ListZones(); err == nil {
+		t.Error("a 401 must not fall back to the records")
+	}
+}
