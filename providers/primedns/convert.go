@@ -32,6 +32,14 @@ func skipRecord(domain string, r record) bool {
 	return false
 }
 
+// noDot removes the trailing dot of a domain name, but leaves the root name "." (the null target of SRV) alone.
+func noDot(s string) string {
+	if s == "." {
+		return s
+	}
+	return strings.TrimSuffix(s, ".")
+}
+
 // withDot makes sure a domain name ends with a dot (the API stores names the way they were sent).
 func withDot(s string) string {
 	if s == "" || strings.HasSuffix(s, ".") {
@@ -112,21 +120,21 @@ func fromRecordConfig(rc *models.RecordConfig) recordInput {
 	rdata := rc.GetRDATA().String()
 	switch rc.Type {
 	case "CNAME", "NS", "ALIAS", "DNAME":
-		in.Content = strings.TrimSuffix(rdata, ".")
+		in.Content = noDot(rdata)
 	case "PTR":
 		in.Content = withDot(rdata) // the API wants a trailing dot here
 	case "MX":
 		f := rc.AsMX()
 		prio := int(f.Preference)
 		in.Prio = &prio
-		in.Content = strings.TrimSuffix(f.Mx, ".")
+		in.Content = noDot(f.Mx)
 	case "SRV":
 		// "priority weight port target": the priority goes into its own field
 		fields := strings.Fields(rdata)
 		if len(fields) == 4 {
 			prio, _ := strconv.Atoi(fields[0])
 			in.Prio = &prio
-			in.Content = fmt.Sprintf("%s %s %s", fields[1], fields[2], strings.TrimSuffix(fields[3], "."))
+			in.Content = fmt.Sprintf("%s %s %s", fields[1], fields[2], noDot(fields[3]))
 		} else {
 			in.Content = rdata
 		}

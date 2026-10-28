@@ -246,3 +246,15 @@ func TestListZonesOtherErrorsAreReturned(t *testing.T) {
 		t.Error("a 401 must not fall back to the records")
 	}
 }
+
+func TestSRVNullTargetKeepsItsDot(t *testing.T) {
+	dc := newDC(t)
+	rc, err := toRecordConfig(dc, record{ID: 1, Name: "_x._tcp.example.com", Type: "SRV", Content: "65 75 .", Prio: intp(15), TTL: 300})
+	if err != nil {
+		t.Fatal(err)
+	}
+	in := fromRecordConfig(rc)
+	if in.Content != "65 75 ." || in.Prio == nil || *in.Prio != 15 {
+		t.Errorf("request = %+v, want content %q and prio 15", in, "65 75 .")
+	}
+}

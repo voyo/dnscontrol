@@ -12,11 +12,8 @@ import (
 func (*primednsProvider) AuditRecords(records models.Records) []error {
 	a := rejectif.Auditor{}
 
-	a.Add("MX", rejectif.MxNull)               // the API wants a target for MX
-	a.Add("SRV", rejectif.SrvHasNullTarget)    // the API wants a target for SRV
-	a.Add("TXT", rejectif.TxtIsEmpty)          // empty TXT content is rejected (EMPTY_CONTENT)
-	a.Add("TXT", rejectif.TxtHasTrailingSpace) // not stored reliably
-	a.Add("CAA", rejectif.CaaTargetContainsWhitespace)
+	a.Add("MX", rejectif.MxNull)      // the API refuses a null MX target (INVALID_MX)
+	a.Add("TXT", rejectif.TxtIsEmpty) // the API refuses empty TXT content (422)
 	a.Add("NS", apexNSTTL)
 
 	errs := a.Audit(records)
